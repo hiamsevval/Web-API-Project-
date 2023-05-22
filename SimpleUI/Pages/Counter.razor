@@ -1,0 +1,130 @@
+﻿@page "/books"
+@inject IBookData BookData
+@inject IAuthorData AuthorData
+
+@if(data is not null)
+{
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Publish Year</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in data)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.Name</td>
+                    <td>@item.Author.Name  @item.Author.Surname</td>
+                    <td>@item.PublishYear</td>
+                    <td>
+                        <input placeholder="Title" @onchange="@onChangeName" />
+                        <input placeholder="Publish Year" @onchange="@onChangePublishYear" />
+                    </td>
+                    <td>
+                        <input placeholder="Author Name" @onchange="@onChangeAuthorName" />
+                        <input placeholder="Author Surname" @onchange="@onChangeAuthorSurname" />
+                        <input placeholder="Author ID" @onchange="@onChangeAuthorId" />
+                    </td>
+                    <td>
+                        <button class=" btn btn-warning" style="width:135px" 
+                            @onclick="@(e=>UpdateBook(item, name, publishYear,item.Id,author.Id))">Update Book</button>
+                        <button class=" btn btn-danger" style="width:135px"
+                        @onclick="@(e=>DeleteBook(item))">
+                            Delete Book</button>
+                        
+                    </td>
+                    
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="row-cols-md-2" style="margin-top:30px">
+        <input placeholder="Title" @onchange="@onChangeName" />
+        <input placeholder="Author Name" @onchange="@onChangeAuthorName" />
+        <input placeholder="Author Surname" @onchange="@onChangeAuthorSurname" />
+        <input placeholder="Publish Year" @onchange="@onChangePublishYear" />
+        <input placeholder="Author ID" @onchange="@onChangeAuthorId" />
+        <button class=" btn btn-primary" @onclick="@(e=>AddBook(name, publishYear, author.Id))">Add Author</button>
+    </div>
+}
+
+
+@code{
+    private List<BookModel> data = new List<BookModel>();
+    private string name;
+    private AuthorModel author = new AuthorModel();
+    private string publishYear;
+    private string aId;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        data = await BookData.GetBooks("");
+    }
+
+    private void onChangeName(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        name = (string)args.Value;
+        args.Value = null;
+    }
+    private void onChangePublishYear(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        publishYear = (string)args.Value;
+    }
+
+    private void onChangeAuthorName(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+
+        author.Name= args.Value.ToString();
+
+    }
+    private void onChangeAuthorSurname(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        author.Surname = args.Value.ToString();
+    }
+    private void onChangeAuthorId(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        aId = (string)args.Value;
+        author.Id = int.Parse(aId);
+    }
+
+    private async Task AddBook(string name, string publishYear, int authorId)
+    {
+        AuthorModel aut = await AuthorData.GetAuthor(authorId);
+        await BookData.CreateBook(new BookModel
+            {
+                Name = name,
+                PublishYear = publishYear,
+                Author = aut
+    });
+
+        data = await BookData.GetBooks("");
+    }
+
+    private async Task UpdateBook(BookModel book, string n, string publishY, int bookId, int authorId)
+    {
+        book.Name = n;
+        book.PublishYear = publishY;
+        book.Author = await AuthorData.GetAuthor(authorId);
+
+        await BookData.UpdateBook(bookId, book);
+
+        data = await BookData.GetBooks("");
+
+        name = "";
+    }
+
+    private async Task DeleteBook(BookModel book)
+    {
+        await BookData.DeleteBook(book.Id);
+
+        data = await BookData.GetBooks("");
+    }
+}

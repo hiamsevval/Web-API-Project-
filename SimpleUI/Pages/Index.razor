@@ -1,0 +1,83 @@
+﻿@page "/"
+@inject IAuthorData AuthorData
+
+@if(data is not null)
+{
+    @foreach(var item in data)
+    {
+        
+        <div class="row">
+            <div class=" col-md-6">
+                <h2>@item.Id @item.Name @item.Surname</h2>
+            </div>
+            <div class="col-md-8">
+                <input placeholder="Name" @onchange="@onChangeName" />
+                <input placeholder="Surname" @onchange="@onChangeSurname"></input>
+                <button class=" btn btn-warning" @onclick="@(e=>UpdateAuthor(item, Name, Surname))">Update Author</button>
+                <button class=" btn btn-danger" @onclick="@(e=>DeleteAuthor(item))">Delete Author</button>
+                
+            </div>  
+        </div>
+        
+    }
+    <div class="row-cols-md-2" style="margin-top:30px">
+        <input placeholder="Name" @onchange="@onChangeName" />
+        <input placeholder="Surname" @onchange="@onChangeSurname"></input>
+        <button class=" btn btn-primary" @onclick="@(e=>AddAuthor(Name, Surname))">Add Author</button>
+    </div>
+       
+}
+
+
+@code{
+    private List<AuthorModel> data = new List<AuthorModel>();
+    private string Name;
+    private string Surname;
+
+    protected override async Task OnInitializedAsync()
+    {
+        data= await AuthorData.GetAuthors("");
+
+    }
+
+    private void onChangeName(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        Name = (string)args.Value;
+    }
+
+    private void onChangeSurname(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        Surname = (string)args.Value;
+    }
+
+    private async Task AddAuthor(string name, string surname)
+    {
+        await AuthorData.CreateAuthor(new AuthorModel
+            {
+                Name = name,
+                Surname = surname
+            });
+        Name = "";
+        Surname = "";
+
+        data = await AuthorData.GetAuthors("");
+    }
+
+    private async Task UpdateAuthor(AuthorModel author, string name, string surname)
+    {
+        author.Name = name;
+        author.Surname = surname;
+        await AuthorData.UpdateAuthor(author.Id, author);
+
+        data = await AuthorData.GetAuthors("");
+    }
+
+    private async Task DeleteAuthor(AuthorModel author)
+    {
+        await AuthorData.DeleteAuthor(author.Id);
+
+        data = await AuthorData.GetAuthors("");
+    }
+
+}
+
